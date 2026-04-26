@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>POS อาตี๋หมูกระทะ</title>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<style>
+:root { --primary: #28a745; --secondary: #e44d26; }
+
+body {
+    font-family: 'Kanit', sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 20px;
+    padding-bottom: 180px;
+}
+
+.header {
+    background: white;
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.card {
+    background: white;
+    padding: 20px 15px;
+    border-radius: 15px;
+    border: 2px solid transparent;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.card.active {
+    border-color: var(--primary);
+    background-color: #f0fff4;
+    transform: scale(0.98);
+}
+
+.qty-control {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.btn-qty {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    background: white;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#footer-action {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    padding: 20px;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    display: none;
+}
+
+.btn-submit {
+    background: var(--primary);
+    color: white;
+    width: 100%;
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+}
+
+.btn-submit:disabled {
+    background: #ccc;
+}
+
+.skip-option {
+    background: #fff3cd;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #ffeeba;
+}
+
+input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h2 style="margin:0;">อาตี๋หมูกระทะ</h2>
+    <span id="staff-name">กำลังโหลด...</span>
+</div>
+
+<div class="product-grid">
+    <div class="card" onclick="selectItem('ไอศกรีม 10.-',10,this)">🍦 10 บาท</div>
+    <div class="card" onclick="selectItem('ไอศกรีม 20.-',20,this)">🍦 20 บาท</div>
+    <div class="card" onclick="selectItem('เป๊ปซี่เล็ก',15,this)">🥤 15 บาท</div>
+    <div class="card" onclick="selectItem('เป๊ปซี่ใหญ่',30,this)">🥤 30 บาท</div>
+</div>
+
+<div id="footer-action">
+
+    <div class="skip-option">
+        <input type="checkbox" id="skipCount" onchange="toggleStockCount()">
+        <label for="skipCount"><b>วันนี้ไม่ได้นับสต็อก</b></label>
+    </div>
+
+    <div id="stockArea">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span id="name" style="font-weight:bold;"></span>
+            <div class="qty-control">
+                <button class="btn-qty" onclick="changeQty(-1)">-</button>
+                <span id="qty">1</span>
+                <button class="btn-qty" onclick="changeQty(1)">+</button>
+            </div>
+        </div>
+    </div>
+
+    <h3 style="display:flex; justify-content:space-between;">
+        <span>รวม:</span>
+        <span style="color:var(--secondary)"><span id="total">0</span> บาท</span>
+    </h3>
+
+    <button id="submitBtn" class="btn-submit" onclick="send()">ยืนยันบันทึกยอด</button>
+
+</div>
+
+<script>
+let staffName = "";
+let currentItem = "";
+let price = 0;
+let qty = 1;
+let isSkip = false;
+let sending = false;
+
+const BRANCH = "สาขาเสลภูมิ";
+
+async function init() {
+    try {
+        await liff.init({ liffId: "Ud2efbad47d78387b75bc12f37ef1ac64" });
+
+        if (!liff.isLoggedIn()) {
+            liff.login();
+            return;
+        }
+
+        const p = await liff.getProfile();
+        staffName = p.displayName;
+        document.getElementById("staff-name").innerText = "พนักงาน: " + staffName;
+
+    } catch (err) {
+        alert("LIFF error");
+        console.error(err);
+    }
+}
+init();
+
+function selectItem(name,p,el){
+    currentItem = name;
+    price = p;
+    qty = 1;
+
+    document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');
+
+    document.getElementById("footer-action").style.display = "block";
+    update();
+}
+
+function changeQty(n){
+    if (isSkip) return;
+    qty = Math.max(1, qty + n);
+    update();
+}
+
+function toggleStockCount(){
+    isSkip = document.getElementById("skipCount").checked;
+
+    const area = document.getElementById("stockArea");
+
+    if (isSkip){
+        area.style.opacity = "0.3";
+        area.style.pointerEvents = "none";
+    } else {
+        area.style.opacity = "1";
+        area.style.pointerEvents = "auto";
+    }
+}
+
+function update(){
+    document.getElementById("name").innerText = currentItem;
+    document.getElementById("qty").innerText = qty;
+    document.getElementById("total").innerText = (price * qty).toLocaleString();
+}
+
+async function send(){
+
+    if (sending) return;
+
+    if (!currentItem){
+        alert("กรุณาเลือกสินค้า");
+        return;
+    }
+
+    sending = true;
+
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.innerText = "กำลังบันทึก...";
+
+    const payload = {
+        order_id: Date.now(),
+        branch: BRANCH,
+        staff: staffName,
+        item: currentItem,
+        price_unit: price,
+        quantity: isSkip ? null : qty,
+        total_price: price * qty,
+        stock_status: isSkip ? "ไม่ได้นับสต็อก" : "ปกติ",
+        timestamp: new Date().toISOString()
+    };
+
+    try {
+
+        const res = await fetch("https://jczfwvug.rpcl.app/webhook-test/1d7e6c17-c92c-4ace-a9a5-d158748d916d", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const text = await res.text();
+        console.log("RESPONSE:", text);
+
+        if (res.ok){
+            alert("บันทึกสำเร็จ!");
+            liff.closeWindow();
+        } else {
+            throw new Error("bad request");
+        }
+
+    } catch (err) {
+        alert("ส่งไม่สำเร็จ");
+        console.error(err);
+
+        btn.disabled = false;
+        btn.innerText = "ยืนยันบันทึกยอด";
+    }
+
+    sending = false;
+}
+</script>
+
+</body>
+</html>
