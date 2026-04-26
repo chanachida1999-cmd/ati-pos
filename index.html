@@ -1,184 +1,146 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS อาตี๋หมูกระทะ</title>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .product-card:active { transform: scale(0.95); }
-        .shadow-up { box-shadow: 0 -4px 10px rgba(0,0,0,0.05); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 pb-32">
 
-    <div class="bg-white p-4 shadow-sm flex justify-between items-center sticky top-0 z-10">
-        <div>
-            <h1 class="text-xl font-bold text-red-600">อาตี๋หมูกระทะ</h1>
-            <span id="staff-name" class="text-xs text-gray-500">พนักงาน: กำลังโหลด...</span>
-        </div>
-        <button id="shiftBtn" onclick="toggleShift()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-md">เริ่มกะ</button>
-    </div>
+<body class="bg-gray-100 p-4 pb-32">
 
-    <div class="p-4 grid grid-cols-2 gap-4">
-        <div class="product-card bg-white p-6 rounded-2xl shadow-sm text-center border-2 border-transparent hover:border-green-500" onclick="selectItem('ไอติม', 10)">🍦<br>ไอติม 10.-</div>
-        <div class="product-card bg-white p-6 rounded-2xl shadow-sm text-center border-2 border-transparent hover:border-green-500" onclick="selectItem('ไอติมถ้วย', 20)">🍨<br>ไอติมถ้วย 20.-</div>
-        <div class="product-card bg-white p-6 rounded-2xl shadow-sm text-center border-2 border-transparent hover:border-green-500" onclick="selectItem('เป๊ปซี่ 340ml', 13)">🥤<br>เป๊ปซี่เล็ก 13.-</div>
-        <div class="product-card bg-white p-6 rounded-2xl shadow-sm text-center border-2 border-transparent hover:border-green-500" onclick="selectItem('เป๊ปซี่ 990ml', 30)">🍾<br>เป๊ปซี่ใหญ่ 30.-</div>
-    </div>
+<div class="flex justify-between mb-4">
+  <h1 class="text-xl font-bold">POS</h1>
+  <button onclick="toggleShift()" id="shiftBtn"
+    class="bg-blue-500 text-white px-3 py-1 rounded">
+    เริ่มกะ
+  </button>
+</div>
 
-    <div id="cart-area" class="fixed bottom-0 left-0 w-full bg-white p-4 shadow-up rounded-t-3xl hidden">
-        <div class="flex justify-between items-center mb-4">
-            <span id="selected-name" class="font-bold text-lg text-gray-800"></span>
-            <div class="flex items-center gap-4 bg-gray-100 p-1 rounded-full">
-                <button onclick="changeQty(-1)" class="w-10 h-10 bg-white rounded-full text-xl shadow-sm">-</button>
-                <span id="qty" class="text-xl font-bold w-6 text-center">1</span>
-                <button onclick="changeQty(1)" class="w-10 h-10 bg-white rounded-full text-xl shadow-sm">+</button>
-            </div>
-        </div>
-        <div class="flex justify-between mb-4 text-xl font-bold border-t pt-4">
-            <span>รวม:</span>
-            <span class="text-red-600"><span id="total">0</span> บาท</span>
-        </div>
-        <div class="flex gap-2">
-            <button onclick="sendData('sale')" class="flex-1 bg-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg">ยืนยันขาย</button>
-            <button onclick="sendData('stock_in')" class="bg-orange-500 text-white px-4 rounded-xl font-bold shadow-lg">นำเข้าสต็อก</button>
-        </div>
-    </div>
+<div id="grid" class="grid grid-cols-2 gap-3"></div>
 
-    <div id="shift-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-6 z-50">
-        <div class="bg-white w-full rounded-3xl p-6 shadow-2xl">
-            <h2 class="text-xl font-bold mb-2">สรุปยอดปิดกะ</h2>
-            <p class="mb-4 text-gray-500 text-sm border-b pb-2" id="shift-time"></p>
-            <div class="bg-gray-50 p-4 rounded-xl mb-4">
-                <p class="text-gray-600">ยอดขายรวมในระบบ:</p>
-                <p class="text-2xl font-bold text-black"><span id="sys-sale">0</span> บาท</p>
-            </div>
-            <label class="block text-sm font-bold text-gray-700 mb-1">เงินที่นับได้จริง:</label>
-            <input type="number" id="cash-input" placeholder="0.00" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-4 text-2xl focus:border-blue-500 outline-none">
-            
-            <div id="result-msg" class="text-center font-bold mb-4 hidden p-3 rounded-xl"></div>
-            
-            <div class="flex gap-2">
-                <button onclick="document.getElementById('shift-modal').classList.add('hidden')" class="flex-1 bg-gray-100 py-3 rounded-xl font-bold">ย้อนกลับ</button>
-                <button id="confirm-close-btn" onclick="confirmCloseShift()" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold">บันทึกปิดกะ</button>
-            </div>
-        </div>
-    </div>
+<div class="fixed bottom-0 left-0 w-full bg-white p-4 shadow">
+  <div class="flex justify-between">
+    <span>รวม</span>
+    <span id="total">0</span>
+  </div>
+  <button onclick="checkout()" 
+    class="w-full bg-green-500 text-white p-2 mt-2">
+    บันทึกยอด
+  </button>
+</div>
 
-    <script>
-        let staff = "พนักงานทั่วไป";
-        let currentItem = "";
-        let price = 0;
-        let qty = 1;
-        let isShiftOpen = false;
-        let shiftTotal = 0;
+<!-- ปิดกะ -->
+<div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white p-4 rounded w-80">
+    <h2 class="font-bold mb-2">ปิดกะ</h2>
+    <p>ยอดขายระบบ: <span id="sysTotal"></span></p>
+    <input id="cash" type="number" placeholder="เงินนับจริง"
+      class="border w-full p-2 my-2">
+    <div id="diff"></div>
+    <button onclick="confirmShift()" class="bg-green-500 text-white w-full p-2 mt-2">ยืนยัน</button>
+  </div>
+</div>
 
-        // เชื่อมต่อ LINE LIFF
-        async function initLIFF() {
-            try {
-                await liff.init({ liffId: "U7f37a4215005ea8d0aed536035a334e7" }); // เปลี่ยนเป็น ID ของคุณ
-                if (!liff.isLoggedIn()) liff.login();
-                const p = await liff.getProfile();
-                staff = p.displayName;
-                document.getElementById('staff-name').innerText = "พนักงาน: " + staff;
-            } catch (e) { console.log("LIFF Error", e); }
-        }
-        initLIFF();
+<script>
 
-        function toggleShift() {
-            if (!isShiftOpen) {
-                isShiftOpen = true;
-                shiftTotal = 0;
-                document.getElementById('shiftBtn').innerText = "ปิดกะ";
-                document.getElementById('shiftBtn').classList.replace('bg-blue-600', 'bg-red-600');
-                alert("เริ่มกะการขายแล้ว!");
-            } else {
-                document.getElementById('sys-sale').innerText = shiftTotal.toLocaleString();
-                document.getElementById('shift-time').innerText = "ปิดกะเวลา: " + new Date().toLocaleString('th-TH');
-                document.getElementById('shift-modal').classList.remove('hidden');
-            }
-        }
+const GET_URL = "https://jczfwvug.rpcl.app/webhook/82548253-31b7-4a0f-8945-9028a70be9a6";
+const POST_URL = "https://jczfwvug.rpcl.app/webhook/ati-pos-webhook";
 
-        function selectItem(name, p) {
-            currentItem = name;
-            price = p;
-            qty = 1;
-            document.getElementById('cart-area').classList.remove('hidden');
-            updateUI();
-        }
+let products = [];
+let cart = [];
+let total = 0;
+let shiftOpen = false;
 
-        function changeQty(n) {
-            qty = Math.max(1, qty + n);
-            updateUI();
-        }
+async function load(){
+  const res = await fetch(GET_URL);
+  const data = await res.json();
 
-        function updateUI() {
-            document.getElementById('selected-name').innerText = currentItem;
-            document.getElementById('qty').innerText = qty;
-            document.getElementById('total').innerText = (price * qty).toLocaleString();
-        }
+  // map ให้ชัวร์
+  products = data.map(p => ({
+    name: p.name || p["ชื่อสินค้า"],
+    price: Number(p.price || p["ราคาขาย"]),
+    image: p.image || p["รูป"] || ""
+  }));
 
-        async function sendData(mode) {
-            const payload = {
-                type: mode,
-                item: currentItem,
-                price_unit: price,
-                quantity: qty,
-                total_price: price * qty,
-                staff: staff,
-                timestamp: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
-            };
+  render();
+}
 
-            try {
-                const res = await fetch("https://jczfwvug.rpcl.app/webhook/ati-pos-webhook", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+function render(){
+  let html = "";
+  products.forEach(p=>{
+    html += `
+    <div onclick="add('${p.name}',${p.price})"
+    class="bg-white p-3 rounded shadow text-center">
+      <img src="${p.image || 'https://via.placeholder.com/100'}" class="h-20 mx-auto">
+      <p>${p.name}</p>
+      <p>${p.price} บาท</p>
+    </div>`;
+  });
+  document.getElementById("grid").innerHTML = html;
+}
 
-                if (res.ok) {
-                    if (mode === 'sale') shiftTotal += (price * qty);
-                    alert(mode === 'sale' ? "บันทึกยอดขายสำเร็จ!" : "นำเข้าสต็อกสำเร็จ!");
-                    document.getElementById('cart-area').classList.add('hidden');
-                }
-            } catch (e) { alert("เกิดข้อผิดพลาดในการส่งข้อมูล"); }
-        }
+function add(name,price){
+  if(!shiftOpen){
+    alert("กรุณาเริ่มกะก่อน");
+    return;
+  }
 
-        async function confirmCloseShift() {
-            const cash = parseFloat(document.getElementById('cash-input').value) || 0;
-            const diff = cash - shiftTotal;
-            const msg = document.getElementById('result-msg');
-            msg.classList.remove('hidden');
+  cart.push({name,price});
+  total += price;
+  document.getElementById("total").innerText = total;
+}
 
-            if (diff === 0) {
-                msg.innerText = "✨ ตัดยอดตรงจ้า สต็อกน่ารัก!";
-                msg.className = "text-green-700 bg-green-50 font-bold mb-4 p-3 rounded-xl";
-            } else {
-                msg.innerText = "⚠️ ยอดต่าง: " + diff.toLocaleString() + " บาท";
-                msg.className = "text-red-700 bg-red-50 font-bold mb-4 p-3 rounded-xl";
-            }
-            
-            // ส่งรายงานปิดกะ
-            await fetch("https://jczfwvug.rpcl.app/webhook/ati-pos-webhook", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    type: 'shift_report',
-                    total_sales: shiftTotal,
-                    cash_counted: cash,
-                    difference: diff,
-                    staff: staff,
-                    timestamp: new Date().toLocaleString('th-TH')
-                })
-            });
+async function checkout(){
+  if(cart.length === 0) return;
 
-            setTimeout(() => {
-                isShiftOpen = false;
-                location.reload(); 
-            }, 3000);
-        }
-    </script>
+  await fetch(POST_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      items: cart
+    })
+  });
+
+  alert("บันทึกแล้ว");
+
+  cart=[];
+  total=0;
+  document.getElementById("total").innerText=0;
+}
+
+function toggleShift(){
+  if(!shiftOpen){
+    shiftOpen = true;
+    document.getElementById("shiftBtn").innerText = "ปิดกะ";
+  }else{
+    document.getElementById("modal").classList.remove("hidden");
+    document.getElementById("sysTotal").innerText = total;
+  }
+}
+
+function confirmShift(){
+  const cash = Number(document.getElementById("cash").value);
+  const diff = cash - total;
+
+  const diffEl = document.getElementById("diff");
+
+  if(diff === 0){
+    diffEl.innerHTML = "✅ ตรง";
+  }else{
+    diffEl.innerHTML = "⚠️ ต่าง: " + diff;
+  }
+
+  shiftOpen = false;
+  total = 0;
+  cart = [];
+
+  document.getElementById("modal").classList.add("hidden");
+  document.getElementById("shiftBtn").innerText = "เริ่มกะ";
+}
+
+load();
+
+</script>
 </body>
 </html>
