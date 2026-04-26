@@ -165,6 +165,7 @@ const BRANCH = "สาขาเสลภูมิ";
 
 async function init() {
     try {
+        // *** ข้อควรระวัง: ตรวจสอบเลข LIFF ID อีกครั้งในหน้า LINE Developers นะครับ ***
         await liff.init({ liffId: "Ud2efbad47d78387b75bc12f37ef1ac64" });
 
         if (!liff.isLoggedIn()) {
@@ -177,7 +178,6 @@ async function init() {
         document.getElementById("staff-name").innerText = "พนักงาน: " + staffName;
 
     } catch (err) {
-        alert("LIFF error");
         console.error(err);
     }
 }
@@ -242,32 +242,29 @@ async function send(){
         staff: staffName,
         item: currentItem,
         price_unit: price,
-        quantity: isSkip ? null : qty,
+        quantity: isSkip ? 0 : qty,
         total_price: price * qty,
         stock_status: isSkip ? "ไม่ได้นับสต็อก" : "ปกติ",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toLocaleString('th-TH')
     };
 
     try {
-
-        const res = await fetch("https://jczfwvug.rpcl.app/webhook-test/ati-pos-webhook", {
+        // แก้ไข URL เป็นแบบ Production (ไม่มี -test)
+        const res = await fetch("https://jczfwvug.rpcl.app/webhook/ati-pos-webhook", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
-        const text = await res.text();
-        console.log("RESPONSE:", text);
-
         if (res.ok){
             alert("บันทึกสำเร็จ!");
             liff.closeWindow();
         } else {
-            throw new Error("bad request");
+            throw new Error("ส่งข้อมูลไม่สำเร็จ");
         }
 
     } catch (err) {
-        alert("ส่งไม่สำเร็จ");
+        alert("ขออภัย! ระบบขัดข้อง กรุณาลองใหม่อีกครั้ง");
         console.error(err);
 
         btn.disabled = false;
